@@ -218,11 +218,17 @@ export const appRouter = t.router({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const { id, categoryIds, ...updateData } = input;
+        const { id, categoryIds, title, ...updateData } = input;
+
+        // Build update object
+        const updateFields: any = {
+          ...updateData,
+          updatedAt: new Date(),
+        };
 
         // Generate new slug if title changed
-        if (updateData.title) {
-          const baseSlug = generateSlug(updateData.title);
+        if (title) {
+          const baseSlug = generateSlug(title);
           const slug = await generateUniqueSlug(
             baseSlug,
             async (slug) => {
@@ -234,15 +240,13 @@ export const appRouter = t.router({
               return !existing || existing.id === id;
             }
           );
-          updateData.slug = slug;
+          updateFields.title = title;
+          updateFields.slug = slug;
         }
 
         const [row] = await ctx.db
           .update(posts)
-          .set({
-            ...updateData,
-            updatedAt: new Date(),
-          })
+          .set(updateFields)
           .where(eq(posts.id, id))
           .returning();
 
@@ -378,6 +382,12 @@ export const appRouter = t.router({
       try {
         const { id, name, ...updateData } = input;
 
+        // Build update object
+        const updateFields: any = {
+          ...updateData,
+          updatedAt: new Date(),
+        };
+
         // Generate new slug if name changed
         if (name) {
           const baseSlug = generateSlug(name);
@@ -392,16 +402,13 @@ export const appRouter = t.router({
               return !existing || existing.id === id;
             }
           );
-          updateData.slug = slug;
-          updateData.name = name;
+          updateFields.slug = slug;
+          updateFields.name = name;
         }
 
         const [row] = await ctx.db
           .update(categories)
-          .set({
-            ...updateData,
-            updatedAt: new Date(),
-          })
+          .set(updateFields)
           .where(eq(categories.id, id))
           .returning();
 
